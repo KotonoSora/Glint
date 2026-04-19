@@ -1,0 +1,4 @@
+<resources>
+
+    <style name="Theme.Glint" parent="Theme.MaterialComponents.Light" />
+</resources>
