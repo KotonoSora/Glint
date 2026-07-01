@@ -14,8 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jn.glint.ui.NeonButton
-import com.jn.glint.ui.theme.NeonCyan
-import com.jn.glint.ui.theme.NeonMagenta
+import com.jn.glint.ui.theme.AppTitleColor
+import com.jn.glint.ui.theme.HelpButtonColor
+import com.jn.glint.ui.theme.PlayButtonColor
+import com.jn.glint.ui.theme.SettingsButtonColor
+import com.jn.glint.ui.theme.ShopButtonColor
 
 @Composable
 fun HomeScreen(
@@ -35,17 +38,17 @@ fun HomeScreen(
         Text(
             text = "GLINT",
             style = MaterialTheme.typography.displayLarge,
-            color = MaterialTheme.colorScheme.primary
+            color = AppTitleColor
         )
 
         Spacer(modifier = Modifier.height(64.dp))
 
-        NeonButton(text = "PLAY", onClick = onPlayClicked, color = NeonCyan)
+        NeonButton(text = "PLAY", onClick = onPlayClicked, color = PlayButtonColor)
         Spacer(modifier = Modifier.height(16.dp))
-        NeonButton(text = "SHOP", onClick = onShopClicked, color = NeonMagenta)
+        NeonButton(text = "SHOP", onClick = onShopClicked, color = ShopButtonColor)
         Spacer(modifier = Modifier.height(16.dp))
-        NeonButton(text = "SETTINGS", onClick = onSettingsClicked, color = NeonCyan)
+        NeonButton(text = "SETTINGS", onClick = onSettingsClicked, color = SettingsButtonColor)
         Spacer(modifier = Modifier.height(16.dp))
-        NeonButton(text = "HELP", onClick = onHelpClicked, color = NeonMagenta)
+        NeonButton(text = "HELP", onClick = onHelpClicked, color = HelpButtonColor)
     }
 }

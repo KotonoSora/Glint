@@ -13,10 +13,15 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jn.glint.ui.NeonButton
+import com.jn.glint.ui.theme.GlintTheme
 import com.jn.glint.ui.theme.NeonCyan
+import com.jn.glint.ui.theme.NeonGreen
 import com.jn.glint.ui.theme.NeonMagenta
+import com.jn.glint.ui.theme.NeonYellow
 
 @Composable
 fun LevelSelectScreen(
@@ -34,15 +39,18 @@ fun LevelSelectScreen(
         Text(
             text = "SELECT LEVEL",
             style = MaterialTheme.typography.displaySmall,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(64.dp))
 
-        NeonButton(text = "2x2 EASY", onClick = { onLevelSelected(2) }, color = NeonCyan)
+        NeonButton(text = "4x4 BEGINNER", onClick = { onLevelSelected(4) }, color = NeonGreen)
         Spacer(modifier = Modifier.height(16.dp))
-        NeonButton(text = "4x4 NORMAL", onClick = { onLevelSelected(4) }, color = NeonMagenta)
+        NeonButton(text = "6x6 EASY", onClick = { onLevelSelected(6) }, color = NeonCyan)
         Spacer(modifier = Modifier.height(16.dp))
-        NeonButton(text = "6x6 HARD", onClick = { onLevelSelected(6) }, color = NeonCyan)
+        NeonButton(text = "9x9 MEDIUM", onClick = { onLevelSelected(9) }, color = NeonYellow)
+        Spacer(modifier = Modifier.height(16.dp))
+        NeonButton(text = "15x15 HARD", onClick = { onLevelSelected(15) }, color = NeonMagenta)
 
         Spacer(modifier = Modifier.height(32.dp))
         TextButton(onClick = onBackClicked) {
@@ -52,5 +60,16 @@ fun LevelSelectScreen(
                 color = MaterialTheme.colorScheme.secondary
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LevelSelectScreenPreview() {
+    GlintTheme {
+        LevelSelectScreen(
+            onLevelSelected = {},
+            onBackClicked = {}
+        )
     }
 }

@@ -1,29 +1,32 @@
 package com.jn.glint.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jn.glint.model.CoinRepository
+import com.jn.glint.domain.usecase.GenerateTilesUseCase
+import com.jn.glint.domain.usecase.GetUserCoinsUseCase
+import com.jn.glint.domain.usecase.UpdateUserCoinsUseCase
 import com.jn.glint.model.GameUiState
-import com.jn.glint.model.Tile
 import com.jn.glint.model.TileStatus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class GameViewModel(
-    application: Application,
-    private val savedStateHandle: SavedStateHandle
-) : AndroidViewModel(application) {
+    private val getUserCoinsUseCase: GetUserCoinsUseCase,
+    private val updateUserCoinsUseCase: UpdateUserCoinsUseCase,
+    private val generateTilesUseCase: GenerateTilesUseCase
+) : ViewModel() {
 
-    private val coinRepository = CoinRepository(application)
-
-    val uiState: StateFlow<GameUiState> = savedStateHandle.getStateFlow("ui_state", GameUiState())
+    private val _uiState = MutableStateFlow(GameUiState())
+    val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
     private val _soundEvent = MutableSharedFlow<String>()
     val soundEvent: SharedFlow<String> = _soundEvent.asSharedFlow()
@@ -33,37 +36,31 @@ class GameViewModel(
 
     init {
         viewModelScope.launch {
-            coinRepository.coinsFlow.collectLatest { coins ->
-                updateState { it.copy(coins = coins) }
+            getUserCoinsUseCase().collectLatest { coins ->
+                _uiState.update { it.copy(coins = coins) }
             }
         }
         if (uiState.value.tiles.isEmpty()) {
-            startNewGame(4)
+            startNewGame(6)
         }
-    }
-
-    private fun updateState(function: (GameUiState) -> GameUiState) {
-        val newState = function(uiState.value)
-        savedStateHandle["ui_state"] = newState
     }
 
     fun startNewGame(gridSize: Int) {
-        val totalTiles = gridSize * gridSize
-        val pairs = totalTiles / 2
-        val values = (0 until pairs).flatMap { listOf(it, it) }.shuffled()
+        val newTiles = generateTilesUseCase(gridSize)
 
-        val newTiles = values.mapIndexed { index, value ->
-            Tile(id = index, value = value)
-        }
-
-        updateState {
+        _uiState.update {
             GameUiState(
                 tiles = newTiles,
                 gridSize = gridSize,
-                coins = it.coins // Preserve coins across games
+                coins = it.coins, // Preserve coins across games
+                matchesFound = 0,
+                moves = 0,
+                gameCompleted = false,
+                isProcessing = false
             )
         }
         firstSelectedTileIndex = null
+        lastRevealedIndex = null
     }
 
     fun onTileClicked(index: Int) {
@@ -86,35 +83,39 @@ class GameViewModel(
             val firstIndex = firstSelectedTileIndex!!
             if (firstIndex == index) return
 
-            updateState { it.copy(moves = it.moves + 1, isProcessing = true) }
+            _uiState.update { it.copy(moves = it.moves + 1, isProcessing = true) }
 
             viewModelScope.launch {
-                delay(1000)
+                delay(1000.milliseconds)
                 val firstTile = uiState.value.tiles[firstIndex]
                 val secondTile = uiState.value.tiles[index]
 
                 if (firstTile.value == secondTile.value) {
                     // Match found
-                    _soundEvent.emit("tap")
-                    updateTilesStatus(listOf(firstIndex, index), TileStatus.MATCHED)
-                    lastRevealedIndex = null
+                    viewModelScope.launch { _soundEvent.emit("tap") }
 
-                    val reward =
-                        (uiState.value.matchesFound) * 10 - (uiState.value.moves / 2).coerceAtLeast(
-                            0
-                        )
+                    _uiState.update { state ->
+                        val newTiles = state.tiles.toMutableList()
+                        newTiles[firstIndex] =
+                            newTiles[firstIndex].copy(status = TileStatus.MATCHED)
+                        newTiles[index] = newTiles[index].copy(status = TileStatus.MATCHED)
 
-                    updateState {
-                        val newMatches = it.matchesFound + 1
-                        val completed = newMatches == (it.gridSize * it.gridSize) / 2
+                        val newMatches = state.matchesFound + 1
+                        val completed = newMatches == state.tiles.size / 2
+
+                        val reward = newMatches * 10 - (state.moves / 2).coerceAtLeast(0)
+
                         if (completed) {
                             viewModelScope.launch {
+                                delay(500.milliseconds) // Small delay to let user see the last match
                                 _soundEvent.emit("win")
-                                coinRepository.updateCoins(reward)
-                                updateState { state -> state.copy(coins = state.coins + reward) }
+                                updateUserCoinsUseCase(reward)
+                                _uiState.update { it.copy(coins = it.coins + reward) }
                             }
                         }
-                        it.copy(
+
+                        state.copy(
+                            tiles = newTiles,
                             matchesFound = newMatches,
                             gameCompleted = completed,
                             isProcessing = false
@@ -125,7 +126,7 @@ class GameViewModel(
                     _soundEvent.emit("error")
                     updateTilesStatus(listOf(firstIndex, index), TileStatus.HIDDEN)
                     lastRevealedIndex = null
-                    updateState { it.copy(isProcessing = false) }
+                    _uiState.update { it.copy(isProcessing = false) }
                 }
                 firstSelectedTileIndex = null
             }
@@ -140,8 +141,8 @@ class GameViewModel(
         if (currentState.tiles[lastIdx].status != TileStatus.REVEALED) return
 
         viewModelScope.launch {
-            updateState { it.copy(coins = it.coins - 25) }
-            coinRepository.updateCoins(-25)
+            _uiState.update { it.copy(coins = it.coins - 25) }
+            updateUserCoinsUseCase(-25)
             updateTileStatus(lastIdx, TileStatus.HIDDEN)
             firstSelectedTileIndex = null
             lastRevealedIndex = null
@@ -150,7 +151,7 @@ class GameViewModel(
     }
 
     private fun updateTileStatus(index: Int, status: TileStatus) {
-        updateState { state ->
+        _uiState.update { state ->
             val newTiles = state.tiles.toMutableList()
             newTiles[index] = newTiles[index].copy(status = status)
             state.copy(tiles = newTiles)
@@ -158,7 +159,7 @@ class GameViewModel(
     }
 
     private fun updateTilesStatus(indices: List<Int>, status: TileStatus) {
-        updateState { state ->
+        _uiState.update { state ->
             val newTiles = state.tiles.toMutableList()
             indices.forEach { index ->
                 newTiles[index] = newTiles[index].copy(status = status)
@@ -182,19 +183,19 @@ class GameViewModel(
         }?.index ?: return
 
         viewModelScope.launch {
-            updateState { it.copy(isProcessing = true, coins = it.coins - 50) }
+            _uiState.update { it.copy(isProcessing = true, coins = it.coins - 50) }
             // Deduct coins in repository too
-            coinRepository.updateCoins(-50)
+            updateUserCoinsUseCase(-50)
 
             // Briefly reveal
             updateTilesStatus(listOf(firstHiddenIndex, pairIndex), TileStatus.REVEALED)
             _soundEvent.emit("tap")
 
-            delay(1500)
+            delay(1500.milliseconds)
 
             // Hide again if they haven't been matched (though they shouldn't be matched yet because of isProcessing)
             updateTilesStatus(listOf(firstHiddenIndex, pairIndex), TileStatus.HIDDEN)
-            updateState { it.copy(isProcessing = false) }
+            _uiState.update { it.copy(isProcessing = false) }
         }
     }
 }

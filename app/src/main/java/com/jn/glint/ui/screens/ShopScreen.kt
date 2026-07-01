@@ -32,11 +32,12 @@ import com.jn.glint.ui.theme.CoinGold
 import com.jn.glint.ui.theme.NeonCyan
 import com.jn.glint.ui.theme.NeonMagenta
 import com.jn.glint.viewmodel.ShopViewModel
+import com.jn.glint.viewmodel.ViewModelFactory
 
 @Composable
 fun ShopScreen(
     onBackClicked: () -> Unit,
-    viewModel: ShopViewModel = viewModel()
+    viewModel: ShopViewModel = viewModel(factory = ViewModelFactory.Factory)
 ) {
     val products by viewModel.products.collectAsState()
     val context = LocalContext.current

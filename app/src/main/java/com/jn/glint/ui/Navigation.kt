@@ -8,7 +8,6 @@ import com.jn.glint.ui.screens.GameScreen
 import com.jn.glint.ui.screens.HelpScreen
 import com.jn.glint.ui.screens.HomeScreen
 import com.jn.glint.ui.screens.LevelSelectScreen
-import com.jn.glint.ui.screens.PauseScreen
 import com.jn.glint.ui.screens.ResultScreen
 import com.jn.glint.ui.screens.SettingsScreen
 import com.jn.glint.ui.screens.ShopScreen
@@ -39,18 +38,7 @@ fun AppNavigation(gameViewModel: GameViewModel) {
         composable("game") {
             GameScreen(
                 viewModel = gameViewModel,
-                onPauseClicked = { navController.navigate("pause") },
                 onGameFinished = { navController.navigate("result") }
-            )
-        }
-        composable("pause") {
-            PauseScreen(
-                onContinueClicked = { navController.popBackStack() },
-                onQuitClicked = {
-                    navController.navigate("home") {
-                        popUpTo("home") { inclusive = true }
-                    }
-                }
             )
         }
         composable("result") {

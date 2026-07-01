@@ -130,16 +130,17 @@ class BillingManager(
 
         billingClient.queryProductDetailsAsync(params) { billingResult, queryProductDetailsResult ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                val sortedProducts = queryProductDetailsResult.productDetailsList.sortedBy { product ->
-                    COIN_PACKS[product.productId] ?: Int.MAX_VALUE
-                }.map {
-                    StoreProduct(
-                        productId = it.productId,
-                        title = it.title,
-                        price = it.oneTimePurchaseOfferDetails?.formattedPrice ?: "Unknown",
-                        originalDetails = it
-                    )
-                }
+                val sortedProducts =
+                    queryProductDetailsResult.productDetailsList.sortedBy { product ->
+                        COIN_PACKS[product.productId] ?: Int.MAX_VALUE
+                    }.map {
+                        StoreProduct(
+                            productId = it.productId,
+                            title = it.title,
+                            price = it.oneTimePurchaseOfferDetails?.formattedPrice ?: "Unknown",
+                            originalDetails = it
+                        )
+                    }
                 _products.value = sortedProducts
             }
         }
