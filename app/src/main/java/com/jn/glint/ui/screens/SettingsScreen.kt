@@ -24,11 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jn.glint.ui.theme.NeonCyan
 import com.jn.glint.viewmodel.SettingsViewModel
+import com.jn.glint.viewmodel.ViewModelFactory
 
 @Composable
 fun SettingsScreen(
     onBackClicked: () -> Unit,
-    viewModel: SettingsViewModel = viewModel()
+    viewModel: SettingsViewModel = viewModel(factory = ViewModelFactory.Factory)
 ) {
     val soundEnabled by viewModel.soundEnabled.collectAsState()
     val musicEnabled by viewModel.musicEnabled.collectAsState()

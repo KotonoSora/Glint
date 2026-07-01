@@ -1,7 +1,6 @@
 package com.jn.glint.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jn.glint.model.SettingsRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -9,8 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = SettingsRepository(application)
+class SettingsViewModel(private val repository: SettingsRepository) : ViewModel() {
 
     val soundEnabled: StateFlow<Boolean> = repository.soundEnabledFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
