@@ -37,7 +37,7 @@
 # Moshi (for JSON parsing)
 # -----------------------------------------------------------------------------------
 # Keep classes used with Moshi for serialization
--keep class com.kotonosora.glint.model.** { *; }
+-keep class com.jn.glint.model.** { *; }
 
 # -----------------------------------------------------------------------------------
 # Coroutines
@@ -62,4 +62,4 @@
 # Glint Models
 # -----------------------------------------------------------------------------------
 # Ensure your data models are not obfuscated to avoid issues with Room or Moshi
--keepclassmembers class com.kotonosora.glint.model.** { *; }
+-keepclassmembers class com.jn.glint.model.** { *; }
