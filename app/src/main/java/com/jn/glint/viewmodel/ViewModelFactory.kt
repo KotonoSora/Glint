@@ -20,7 +20,8 @@ class ViewModelFactory(
             modelClass.isAssignableFrom(GameViewModel::class.java) -> {
                 GameViewModel(
                     container.getUserCoinsUseCase,
-                    container.updateUserCoinsUseCase
+                    container.updateUserCoinsUseCase,
+                    container.generateTilesUseCase
                 ) as T
             }
 
@@ -47,7 +48,8 @@ class ViewModelFactory(
                     modelClass.isAssignableFrom(GameViewModel::class.java) -> {
                         GameViewModel(
                             container.getUserCoinsUseCase,
-                            container.updateUserCoinsUseCase
+                            container.updateUserCoinsUseCase,
+                            container.generateTilesUseCase
                         ) as T
                     }
 

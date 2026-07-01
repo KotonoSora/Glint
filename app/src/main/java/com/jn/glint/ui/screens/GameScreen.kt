@@ -48,6 +48,8 @@ import com.jn.glint.ui.theme.NeonCyan
 import com.jn.glint.ui.theme.NeonGreen
 import com.jn.glint.ui.theme.NeonMagenta
 import com.jn.glint.viewmodel.GameViewModel
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun GameScreen(
@@ -55,7 +57,7 @@ fun GameScreen(
     onGameFinished: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
+
     GameContent(
         uiState = uiState,
         onGameFinished = onGameFinished,
@@ -78,6 +80,7 @@ fun GameContent(
     LaunchedEffect(uiState.gameCompleted) {
         if (uiState.gameCompleted) {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            delay(1000.milliseconds) // Allow user to see the final match animation
             onGameFinished()
         }
     }
@@ -94,7 +97,9 @@ fun GameContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -124,7 +129,7 @@ fun GameContent(
             ) {
                 itemsIndexed(uiState.tiles, key = { _, tile -> tile.id }) { index, tile ->
                     TileItem(
-                        tile = tile, 
+                        tile = tile,
                         onClick = { onTileClicked(index) }
                     )
                 }
@@ -155,7 +160,7 @@ fun GameContent(
 
 @Composable
 fun TileItem(
-    tile: Tile, 
+    tile: Tile,
     onClick: () -> Unit
 ) {
     val isRevealed = tile.status != TileStatus.HIDDEN
@@ -206,36 +211,17 @@ fun TileItem(
                 ),
                 tonalElevation = 4.dp
             ) {
-                Box(modifier = Modifier.fillMaxSize().padding(4.dp)) {
-                    // Atomic number (top-left)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                ) {
+                    // Mass number (top-left) - Science A
                     Text(
-                        text = tile.atomicNumber.toString(),
+                        text = formatScienceNumber(tile.massNumber),
                         fontSize = 10.sp,
                         color = Color.White.copy(alpha = 0.9f),
                         modifier = Modifier.align(Alignment.TopStart)
-                    )
-
-                    // Electrons & Charge (top-right)
-                    val charge = tile.atomicNumber - tile.electrons
-                    val chargeText = when {
-                        charge > 0 -> "+$charge"
-                        charge < 0 -> "$charge"
-                        else -> ""
-                    }
-                    Text(
-                        text = "${tile.electrons}e⁻$chargeText",
-                        fontSize = 10.sp,
-                        color = NeonCyan.copy(alpha = 0.8f),
-                        modifier = Modifier.align(Alignment.TopEnd)
-                    )
-
-                    // Mass number (Bottom Center)
-                    Text(
-                        text = "M:${tile.massNumber}",
-                        fontSize = 10.sp,
-                        color = Color.White.copy(alpha = 0.6f),
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                        textAlign = TextAlign.Center
                     )
 
                     // Symbol (Center)
@@ -247,10 +233,23 @@ fun TileItem(
                         textAlign = TextAlign.Center,
                         modifier = Modifier.align(Alignment.Center)
                     )
+
+                    // Atomic number (bottom-left) - Science Z
+                    Text(
+                        text = formatScienceNumber(tile.atomicNumber),
+                        fontSize = 10.sp,
+                        color = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.align(Alignment.BottomStart)
+                    )
                 }
             }
         }
     }
+}
+
+private fun formatScienceNumber(number: Number): String {
+    val d = number.toDouble()
+    return if (d % 1.0 == 0.0) d.toLong().toString() else "%.2f".format(d)
 }
 
 @Preview(name = "6x6 Easy")
