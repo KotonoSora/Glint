@@ -39,7 +39,6 @@ fun AppNavigation(gameViewModel: GameViewModel) {
         composable("game") {
             GameScreen(
                 viewModel = gameViewModel,
-                onPauseClicked = { navController.navigate("pause") },
                 onGameFinished = { navController.navigate("result") }
             )
         }

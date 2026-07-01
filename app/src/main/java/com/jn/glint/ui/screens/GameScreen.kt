@@ -3,7 +3,6 @@ package com.jn.glint.ui.screens
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,8 +19,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,11 +33,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.jn.glint.model.GameUiState
 import com.jn.glint.model.Tile
 import com.jn.glint.model.TileStatus
 import com.jn.glint.ui.SmallNeonButton
 import com.jn.glint.ui.theme.CoinGold
+import com.jn.glint.ui.theme.GlintTheme
 import com.jn.glint.ui.theme.NeonCyan
 import com.jn.glint.ui.theme.NeonGreen
 import com.jn.glint.ui.theme.NeonMagenta
@@ -47,10 +52,27 @@ import com.jn.glint.viewmodel.GameViewModel
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
-    onPauseClicked: () -> Unit,
     onGameFinished: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    
+    GameContent(
+        uiState = uiState,
+        onGameFinished = onGameFinished,
+        onTileClicked = { index -> viewModel.onTileClicked(index) },
+        onUseHint = { viewModel.useHint() },
+        onUndoMove = { viewModel.undoMove() }
+    )
+}
+
+@Composable
+fun GameContent(
+    uiState: GameUiState,
+    onGameFinished: () -> Unit,
+    onTileClicked: (Int) -> Unit,
+    onUseHint: () -> Unit,
+    onUndoMove: () -> Unit
+) {
     val haptic = LocalHapticFeedback.current
 
     LaunchedEffect(uiState.gameCompleted) {
@@ -60,77 +82,82 @@ fun GameScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "MOVES: ${uiState.moves}",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Color.White
-                )
-                Text(
-                    text = "COINS: ${uiState.coins}",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = CoinGold
-                )
-            }
-            IconButton(onClick = onPauseClicked) {
-                Text(
-                    "PAUSE",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(uiState.gridSize),
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(4.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            itemsIndexed(uiState.tiles, key = { _, tile -> tile.id }) { index, tile ->
-                TileItem(tile = tile, onClick = { viewModel.onTileClicked(index) })
-            }
-        }
-
-        Row(
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            SmallNeonButton(
-                text = "HINT(50)",
-                onClick = { viewModel.useHint() },
-                color = NeonCyan,
-                enabled = uiState.coins >= 50 && !uiState.isProcessing
-            )
-            SmallNeonButton(
-                text = "UNDO(25)",
-                onClick = { viewModel.undoMove() },
-                color = NeonMagenta,
-                enabled = uiState.coins >= 25 && !uiState.isProcessing
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "MOVES: ${uiState.moves}",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "COINS: ${uiState.coins}",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = CoinGold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Play Area: 4 columns, Square cards (1:1), Scrollable
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(4),
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(2.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                itemsIndexed(uiState.tiles, key = { _, tile -> tile.id }) { index, tile ->
+                    TileItem(
+                        tile = tile, 
+                        onClick = { onTileClicked(index) }
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                SmallNeonButton(
+                    text = "HINT(50)",
+                    onClick = onUseHint,
+                    color = NeonCyan,
+                    enabled = uiState.coins >= 50 && !uiState.isProcessing
+                )
+                SmallNeonButton(
+                    text = "UNDO(25)",
+                    onClick = onUndoMove,
+                    color = NeonMagenta,
+                    enabled = uiState.coins >= 25 && !uiState.isProcessing
+                )
+            }
         }
     }
 }
 
 @Composable
-fun TileItem(tile: Tile, onClick: () -> Unit) {
+fun TileItem(
+    tile: Tile, 
+    onClick: () -> Unit
+) {
     val isRevealed = tile.status != TileStatus.HIDDEN
     val rotation by animateFloatAsState(
         targetValue = if (isRevealed) 180f else 0f,
@@ -139,7 +166,7 @@ fun TileItem(tile: Tile, onClick: () -> Unit) {
 
     Box(
         modifier = Modifier
-            .aspectRatio(1f)
+            .aspectRatio(1f) // Square ratio 1:1
             .graphicsLayer {
                 rotationY = rotation
                 cameraDistance = 12f * density
@@ -153,14 +180,15 @@ fun TileItem(tile: Tile, onClick: () -> Unit) {
                 modifier = Modifier.fillMaxSize(),
                 shape = RoundedCornerShape(8.dp),
                 color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(2.dp, NeonCyan.copy(alpha = 0.5f)),
-                tonalElevation = 4.dp
+                border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.5f)),
+                tonalElevation = 2.dp
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         "?",
                         color = NeonCyan,
-                        style = MaterialTheme.typography.headlineMedium
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -173,19 +201,126 @@ fun TileItem(tile: Tile, onClick: () -> Unit) {
                 shape = RoundedCornerShape(8.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 border = BorderStroke(
-                    2.dp,
+                    1.5.dp,
                     if (tile.status == TileStatus.MATCHED) NeonGreen else NeonMagenta
                 ),
                 tonalElevation = 4.dp
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxSize().padding(4.dp)) {
+                    // Atomic number (top-left)
                     Text(
-                        text = tile.value.toString(),
+                        text = tile.atomicNumber.toString(),
+                        fontSize = 10.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.align(Alignment.TopStart)
+                    )
+
+                    // Electrons & Charge (top-right)
+                    val charge = tile.atomicNumber - tile.electrons
+                    val chargeText = when {
+                        charge > 0 -> "+$charge"
+                        charge < 0 -> "$charge"
+                        else -> ""
+                    }
+                    Text(
+                        text = "${tile.electrons}e⁻$chargeText",
+                        fontSize = 10.sp,
+                        color = NeonCyan.copy(alpha = 0.8f),
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    )
+
+                    // Mass number (Bottom Center)
+                    Text(
+                        text = "M:${tile.massNumber}",
+                        fontSize = 10.sp,
+                        color = Color.White.copy(alpha = 0.6f),
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        textAlign = TextAlign.Center
+                    )
+
+                    // Symbol (Center)
+                    Text(
+                        text = tile.symbol,
                         color = if (tile.status == TileStatus.MATCHED) NeonGreen else Color.White,
-                        style = MaterialTheme.typography.headlineMedium
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.align(Alignment.Center)
                     )
                 }
             }
         }
+    }
+}
+
+@Preview(name = "6x6 Easy")
+@Composable
+fun GameScreenEasyPreview() {
+    val gridSize = 6
+    val sampleTiles = List(gridSize * gridSize) { i ->
+        Tile(i, "H", 1, 1, 1, if (i % 3 == 0) TileStatus.REVEALED else TileStatus.HIDDEN)
+    }
+    val uiState = GameUiState(
+        tiles = sampleTiles,
+        moves = 5,
+        coins = 100,
+        gridSize = gridSize
+    )
+    GlintTheme {
+        GameContent(
+            uiState = uiState,
+            onGameFinished = {},
+            onTileClicked = {},
+            onUseHint = {},
+            onUndoMove = {}
+        )
+    }
+}
+
+@Preview(name = "9x9 Medium")
+@Composable
+fun GameScreenMediumPreview() {
+    val gridSize = 9
+    val sampleTiles = List(gridSize * gridSize) { i ->
+        Tile(i, "He", 2, 4, 2, if (i % 4 == 0) TileStatus.MATCHED else TileStatus.HIDDEN)
+    }
+    val uiState = GameUiState(
+        tiles = sampleTiles,
+        moves = 10,
+        coins = 150,
+        gridSize = gridSize
+    )
+    GlintTheme {
+        GameContent(
+            uiState = uiState,
+            onGameFinished = {},
+            onTileClicked = {},
+            onUseHint = {},
+            onUndoMove = {}
+        )
+    }
+}
+
+@Preview(name = "15x15 Hard")
+@Composable
+fun GameScreenHardPreview() {
+    val gridSize = 15
+    val sampleTiles = List(gridSize * gridSize) { i ->
+        Tile(i, "Li", 3, 7, 3, if (i % 5 == 0) TileStatus.REVEALED else TileStatus.HIDDEN)
+    }
+    val uiState = GameUiState(
+        tiles = sampleTiles,
+        moves = 0,
+        coins = 200,
+        gridSize = gridSize
+    )
+    GlintTheme {
+        GameContent(
+            uiState = uiState,
+            onGameFinished = {},
+            onTileClicked = {},
+            onUseHint = {},
+            onUndoMove = {}
+        )
     }
 }

@@ -17,9 +17,15 @@ data class GameUiState(
 @Parcelize
 data class Tile(
     val id: Int,
-    val value: Int,
+    val symbol: String,
+    val atomicNumber: Int,
+    val massNumber: Int,
+    val electrons: Int,
     val status: TileStatus = TileStatus.HIDDEN
-) : Parcelable
+) : Parcelable {
+    // Helper to get a unique value for matching
+    val value: String get() = "$symbol-$massNumber-$electrons"
+}
 
 enum class TileStatus {
     HIDDEN, REVEALED, MATCHED

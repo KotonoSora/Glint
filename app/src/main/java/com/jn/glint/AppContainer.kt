@@ -24,7 +24,7 @@ interface AppContainer {
  * Implementation of the [AppContainer].
  */
 class AppContainerImpl(private val context: Context) : AppContainer {
-    
+
     override val coinRepository: CoinRepository by lazy {
         CoinRepository(context)
     }

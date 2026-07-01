@@ -32,6 +32,31 @@ class GameViewModel(
     private var firstSelectedTileIndex: Int? = null
     private var lastRevealedIndex: Int? = null
 
+    private data class Element(val symbol: String, val atomicNumber: Int)
+
+    private val elements = listOf(
+        Element("H", 1),
+        Element("He", 2),
+        Element("Li", 3),
+        Element("Be", 4),
+        Element("B", 5),
+        Element("C", 6),
+        Element("N", 7),
+        Element("O", 8),
+        Element("F", 9),
+        Element("Ne", 10),
+        Element("Na", 11),
+        Element("Mg", 12),
+        Element("Al", 13),
+        Element("Si", 14),
+        Element("P", 15),
+        Element("S", 16),
+        Element("Cl", 17),
+        Element("Ar", 18),
+        Element("K", 19),
+        Element("Ca", 20)
+    )
+
     init {
         viewModelScope.launch {
             getUserCoinsUseCase().collectLatest { coins ->
@@ -39,17 +64,41 @@ class GameViewModel(
             }
         }
         if (uiState.value.tiles.isEmpty()) {
-            startNewGame(4)
+            startNewGame(6)
         }
     }
 
     fun startNewGame(gridSize: Int) {
         val totalTiles = gridSize * gridSize
-        val pairs = totalTiles / 2
-        val values = (0 until pairs).flatMap { listOf(it, it) }.shuffled()
+        val numPairs = totalTiles / 2
 
-        val newTiles = values.mapIndexed { index, value ->
-            Tile(id = index, value = value)
+        val selectedElements = elements.shuffled().take(numPairs)
+
+        val tileData = selectedElements.map { element ->
+            // Generate a random isotope (mass number approx 2x atomic number)
+            val massNumber = element.atomicNumber * 2 + (-1..2).random()
+            // Generate random electron count (neutral or +/- 1)
+            val electrons = element.atomicNumber + (-1..1).random()
+
+            element to (massNumber to electrons)
+        }
+
+        val values = tileData.flatMap { (element, variations) ->
+            val (mass, elecs) = variations
+            listOf(
+                Triple(element, mass, elecs),
+                Triple(element, mass, elecs)
+            )
+        }.shuffled()
+
+        val newTiles = values.mapIndexed { index, (element, mass, elecs) ->
+            Tile(
+                id = index,
+                symbol = element.symbol,
+                atomicNumber = element.atomicNumber,
+                massNumber = mass,
+                electrons = elecs
+            )
         }
 
         _uiState.update {

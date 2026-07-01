@@ -6,7 +6,7 @@ import android.app.Application
  * Application class to initialize the [AppContainer].
  */
 class GlintApplication : Application() {
-    
+
     lateinit var container: AppContainer
 
     override fun onCreate() {

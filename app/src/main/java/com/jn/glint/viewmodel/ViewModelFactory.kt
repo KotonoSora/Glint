@@ -23,12 +23,15 @@ class ViewModelFactory(
                     container.updateUserCoinsUseCase
                 ) as T
             }
+
             modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
                 SettingsViewModel(container.settingsRepository) as T
             }
+
             modelClass.isAssignableFrom(ShopViewModel::class.java) -> {
                 ShopViewModel(application, container.coinRepository) as T
             }
+
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }
@@ -37,7 +40,8 @@ class ViewModelFactory(
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as GlintApplication
+                val application =
+                    checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as GlintApplication
                 val container = application.container
                 return when {
                     modelClass.isAssignableFrom(GameViewModel::class.java) -> {
@@ -46,12 +50,15 @@ class ViewModelFactory(
                             container.updateUserCoinsUseCase
                         ) as T
                     }
+
                     modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
                         SettingsViewModel(container.settingsRepository) as T
                     }
+
                     modelClass.isAssignableFrom(ShopViewModel::class.java) -> {
                         ShopViewModel(application, container.coinRepository) as T
                     }
+
                     else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
                 }
             }

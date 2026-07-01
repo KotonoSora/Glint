@@ -38,11 +38,11 @@ fun LevelSelectScreen(
         )
         Spacer(modifier = Modifier.height(64.dp))
 
-        NeonButton(text = "2x2 EASY", onClick = { onLevelSelected(2) }, color = NeonCyan)
+        NeonButton(text = "6x6 EASY", onClick = { onLevelSelected(6) }, color = NeonCyan)
         Spacer(modifier = Modifier.height(16.dp))
-        NeonButton(text = "4x4 NORMAL", onClick = { onLevelSelected(4) }, color = NeonMagenta)
+        NeonButton(text = "9x9 MEDIUM", onClick = { onLevelSelected(9) }, color = NeonMagenta)
         Spacer(modifier = Modifier.height(16.dp))
-        NeonButton(text = "6x6 HARD", onClick = { onLevelSelected(6) }, color = NeonCyan)
+        NeonButton(text = "15x15 HARD", onClick = { onLevelSelected(15) }, color = NeonCyan)
 
         Spacer(modifier = Modifier.height(32.dp))
         TextButton(onClick = onBackClicked) {
