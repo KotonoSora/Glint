@@ -13,15 +13,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jn.glint.ui.GlintTopBar
+import com.jn.glint.ui.theme.GlintTheme
 import com.jn.glint.ui.theme.NeonCyan
 import com.jn.glint.viewmodel.SettingsViewModel
 import com.jn.glint.viewmodel.ViewModelFactory
@@ -34,45 +36,68 @@ fun SettingsScreen(
     val soundEnabled by viewModel.soundEnabled.collectAsState()
     val musicEnabled by viewModel.musicEnabled.collectAsState()
 
+    SettingsContent(
+        soundEnabled = soundEnabled,
+        musicEnabled = musicEnabled,
+        onBackClicked = onBackClicked,
+        onSoundToggle = { viewModel.setSoundEnabled(it) },
+        onMusicToggle = { viewModel.setMusicEnabled(it) }
+    )
+}
+
+@Composable
+fun SettingsContent(
+    soundEnabled: Boolean,
+    musicEnabled: Boolean,
+    onBackClicked: () -> Unit,
+    onSoundToggle: (Boolean) -> Unit,
+    onMusicToggle: (Boolean) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "SETTINGS",
-            style = MaterialTheme.typography.displaySmall,
-            color = MaterialTheme.colorScheme.primary
+        GlintTopBar(
+            title = "Settings",
+            onBackClick = onBackClicked
         )
 
-        Spacer(modifier = Modifier.height(64.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            SettingsToggle(
+                label = "SOUND EFFECTS",
+                checked = soundEnabled,
+                onCheckedChange = onSoundToggle
+            )
 
-        SettingsToggle(
-            label = "SOUND EFFECTS",
-            checked = soundEnabled,
-            onCheckedChange = { viewModel.setSoundEnabled(it) }
-        )
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        SettingsToggle(
-            label = "BACKGROUND MUSIC",
-            checked = musicEnabled,
-            onCheckedChange = { viewModel.setMusicEnabled(it) }
-        )
-
-        Spacer(modifier = Modifier.height(64.dp))
-
-        TextButton(onClick = onBackClicked) {
-            Text(
-                "BACK",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.secondary
+            SettingsToggle(
+                label = "BACKGROUND MUSIC",
+                checked = musicEnabled,
+                onCheckedChange = onMusicToggle
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SettingsScreenPreview() {
+    GlintTheme {
+        SettingsContent(
+            soundEnabled = true,
+            musicEnabled = false,
+            onBackClicked = {},
+            onSoundToggle = {},
+            onMusicToggle = {}
+        )
     }
 }
 

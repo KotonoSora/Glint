@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import com.jn.glint.model.GameUiState
 import com.jn.glint.model.Tile
 import com.jn.glint.model.TileStatus
+import com.jn.glint.ui.GlintTopBar
 import com.jn.glint.ui.SmallNeonButton
 import com.jn.glint.ui.theme.CoinGold
 import com.jn.glint.ui.theme.GlintTheme
@@ -87,7 +88,13 @@ fun GameContent(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            GlintTopBar(
+                title = "Moves: ${uiState.moves}",
+                coins = uiState.coins
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -96,29 +103,6 @@ fun GameContent(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "MOVES: ${uiState.moves}",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "COINS: ${uiState.coins}",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = CoinGold
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             // Play Area: 4 columns, Square cards (1:1), Scrollable
             LazyVerticalGrid(
                 columns = GridCells.Fixed(4),

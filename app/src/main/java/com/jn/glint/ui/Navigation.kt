@@ -1,6 +1,8 @@
 package com.jn.glint.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -19,7 +21,9 @@ fun AppNavigation(gameViewModel: GameViewModel) {
 
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
+            val uiState by gameViewModel.uiState.collectAsState()
             HomeScreen(
+                coins = uiState.coins,
                 onPlayClicked = { navController.navigate("level_select") },
                 onShopClicked = { navController.navigate("shop") },
                 onSettingsClicked = { navController.navigate("settings") },
