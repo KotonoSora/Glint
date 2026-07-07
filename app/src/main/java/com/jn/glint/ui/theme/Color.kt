@@ -18,6 +18,8 @@ val PlayButtonColor = NeonGreen
 val ShopButtonColor = NeonYellow
 val SettingsButtonColor = NeonCyan
 val HelpButtonColor = NeonMagenta
+val DailyChallengeButtonColor = NeonYellow
+val LeaderboardButtonColor = NeonCyan
 
 // Material 3 Dark Color Scheme (Strictly Dark)
 val primaryDark = NeonCyan

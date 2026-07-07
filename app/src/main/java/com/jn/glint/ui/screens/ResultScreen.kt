@@ -31,9 +31,13 @@ fun ResultScreen(
     onHomeClicked: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val earnedCoins = (uiState.matchesFound * 10) - (uiState.moves / 2).coerceAtLeast(0)
+    val isVictory = uiState.gameCompleted
+    val earnedCoins = if (isVictory) {
+        (uiState.matchesFound * 10) - (uiState.moves / 2).coerceAtLeast(0)
+    } else 0
 
     ResultContent(
+        isVictory = isVictory,
         moves = uiState.moves,
         earnedCoins = earnedCoins,
         onPlayAgainClicked = onPlayAgainClicked,
@@ -43,6 +47,7 @@ fun ResultScreen(
 
 @Composable
 fun ResultContent(
+    isVictory: Boolean,
     moves: Int,
     earnedCoins: Int,
     onPlayAgainClicked: () -> Unit,
@@ -57,9 +62,9 @@ fun ResultContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "VICTORY!",
+            text = if (isVictory) "VICTORY!" else "GAME OVER",
             style = MaterialTheme.typography.displayMedium,
-            color = MaterialTheme.colorScheme.primary
+            color = if (isVictory) MaterialTheme.colorScheme.primary else NeonMagenta
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -70,13 +75,15 @@ fun ResultContent(
             color = Color.White
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        if (isVictory) {
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "COINS EARNED: $earnedCoins",
-            style = MaterialTheme.typography.titleMedium,
-            color = CoinGold
-        )
+            Text(
+                text = "COINS EARNED: $earnedCoins",
+                style = MaterialTheme.typography.titleMedium,
+                color = CoinGold
+            )
+        }
 
         Spacer(modifier = Modifier.height(64.dp))
 
@@ -96,13 +103,28 @@ fun ResultContent(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Victory")
 @Composable
-fun ResultScreenPreview() {
+fun ResultScreenVictoryPreview() {
     GlintTheme {
         ResultContent(
+            isVictory = true,
             moves = 42,
             earnedCoins = 350,
+            onPlayAgainClicked = {},
+            onHomeClicked = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "GameOver")
+@Composable
+fun ResultScreenGameOverPreview() {
+    GlintTheme {
+        ResultContent(
+            isVictory = false,
+            moves = 50,
+            earnedCoins = 0,
             onPlayAgainClicked = {},
             onHomeClicked = {}
         )

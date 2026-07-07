@@ -6,6 +6,7 @@ import com.jn.glint.domain.usecase.GenerateTilesUseCase
 import com.jn.glint.domain.usecase.GetUserCoinsUseCase
 import com.jn.glint.domain.usecase.UpdateUserCoinsUseCase
 import com.jn.glint.model.GameUiState
+import com.jn.glint.model.HistoryEntry
 import com.jn.glint.model.TileStatus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,6 +18,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.milliseconds
 
 class GameViewModel(
@@ -45,18 +48,20 @@ class GameViewModel(
         }
     }
 
-    fun startNewGame(gridSize: Int) {
+    fun startNewGame(gridSize: Int, maxMoves: Int = 0, isDailyChallenge: Boolean = false) {
         val newTiles = generateTilesUseCase(gridSize)
 
-        _uiState.update {
-            GameUiState(
+        _uiState.update { state ->
+            state.copy(
                 tiles = newTiles,
                 gridSize = gridSize,
-                coins = it.coins, // Preserve coins across games
                 matchesFound = 0,
                 moves = 0,
                 gameCompleted = false,
-                isProcessing = false
+                isGameOver = false,
+                isProcessing = false,
+                maxMoves = maxMoves,
+                isDailyChallenge = isDailyChallenge
             )
         }
         firstSelectedTileIndex = null
@@ -65,7 +70,7 @@ class GameViewModel(
 
     fun onTileClicked(index: Int) {
         val currentState = uiState.value
-        if (currentState.isProcessing || currentState.gameCompleted) return
+        if (currentState.isProcessing || currentState.gameCompleted || currentState.isGameOver) return
 
         val clickedTile = currentState.tiles[index]
         if (clickedTile.status != TileStatus.HIDDEN) return
@@ -103,14 +108,36 @@ class GameViewModel(
                         val newMatches = state.matchesFound + 1
                         val completed = newMatches == state.tiles.size / 2
 
-                        val reward = newMatches * 10 - (state.moves / 2).coerceAtLeast(0)
+                        val baseReward = newMatches * 10 - (state.moves / 2).coerceAtLeast(0)
+                        val reward = if (state.isDailyChallenge) {
+                            baseReward * state.dailyChallengeRules.rewardMultiplier
+                        } else {
+                            baseReward
+                        }.coerceAtLeast(0)
 
                         if (completed) {
                             viewModelScope.launch {
                                 delay(500.milliseconds) // Small delay to let user see the last match
                                 _soundEvent.emit("win")
                                 updateUserCoinsUseCase(reward)
-                                _uiState.update { it.copy(coins = it.coins + reward) }
+
+                                val currentDateTime = LocalDateTime.now().format(
+                                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                                )
+                                val newEntry = HistoryEntry(
+                                    dateTime = currentDateTime,
+                                    score = (10000 - state.moves * 100).coerceAtLeast(0), // Example score logic
+                                    reward = reward
+                                )
+
+                                _uiState.update { state ->
+                                    state.copy(
+                                        coins = state.coins + reward,
+                                        historyEntries = (listOf(newEntry) + state.historyEntries).take(
+                                            10
+                                        )
+                                    )
+                                }
                             }
                         }
 
@@ -126,7 +153,14 @@ class GameViewModel(
                     _soundEvent.emit("error")
                     updateTilesStatus(listOf(firstIndex, index), TileStatus.HIDDEN)
                     lastRevealedIndex = null
-                    _uiState.update { it.copy(isProcessing = false) }
+
+                    _uiState.update { state ->
+                        val gameOver = state.maxMoves > 0 && state.moves >= state.maxMoves
+                        if (gameOver) {
+                            viewModelScope.launch { _soundEvent.emit("error") }
+                        }
+                        state.copy(isProcessing = false, isGameOver = gameOver)
+                    }
                 }
                 firstSelectedTileIndex = null
             }
