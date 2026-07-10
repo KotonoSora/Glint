@@ -1,7 +1,4 @@
-import java.io.FileOutputStream
-import java.net.URL
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
+import com.android.build.api.dsl.ApplicationExtension
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,27 +6,23 @@ plugins {
     alias(libs.plugins.kotlin.parcelize)
 }
 
-android {
-    namespace = "com.kotonosora.glint"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+configure<ApplicationExtension> {
+    namespace = "com.jn.glint"
+    compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.kotonosora.glint"
-        minSdk = 24
-        targetSdk = 36
+        applicationId = "com.jn.glint"
+        minSdk = 30
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -78,77 +71,4 @@ dependencies {
     androidTestImplementation(libs.androidx.runner)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-}
-
-tasks.register("generateAssets") {
-    doLast {
-        val fontDir = file("src/main/res/font")
-        fontDir.mkdirs()
-        try {
-            val fontUrl =
-                URL("https://raw.githubusercontent.com/google/fonts/main/ofl/pressstart2p/PressStart2P-Regular.ttf")
-            fontUrl.openStream().use { input ->
-                file("src/main/res/font/press_start_2p.ttf").outputStream().use { output ->
-                    input.copyTo(output)
-                }
-            }
-        } catch (e: Exception) {
-            println("Failed to download font: ${e.message}")
-        }
-
-        val rawDir = file("src/main/res/raw")
-        rawDir.mkdirs()
-
-        fun writeWav(name: String, freqFunc: (Double) -> Double, durationMs: Int) {
-            val sampleRate = 44100
-            val numSamples = (sampleRate * durationMs) / 1000
-            val wavFile = file("src/main/res/raw/$name.wav")
-            FileOutputStream(wavFile).use { out ->
-                val dataSize = numSamples * 2
-                val byteRate = sampleRate * 2
-
-                val header = ByteBuffer.allocate(44).apply {
-                    order(ByteOrder.LITTLE_ENDIAN)
-                    put("RIFF".toByteArray())
-                    putInt(36 + dataSize)
-                    put("WAVE".toByteArray())
-                    put("fmt ".toByteArray())
-                    putInt(16)
-                    putShort(1.toShort()) // PCM
-                    putShort(1.toShort()) // Channels
-                    putInt(sampleRate)
-                    putInt(byteRate)
-                    putShort(2.toShort()) // Block align
-                    putShort(16.toShort()) // Bits per sample
-                    put("data".toByteArray())
-                    putInt(dataSize)
-                }.array()
-
-                out.write(header)
-
-                val data = ByteBuffer.allocate(dataSize).apply {
-                    order(ByteOrder.LITTLE_ENDIAN)
-                    for (i in 0 until numSamples) {
-                        val t = i.toDouble() / sampleRate
-                        val freq = freqFunc(t)
-                        // Simple sine wave
-                        val value =
-                            (Math.sin(2.0 * Math.PI * freq * t) * 32767.0 * 0.5).toInt().toShort()
-                        putShort(value)
-                    }
-                }.array()
-
-                out.write(data)
-            }
-        }
-
-        // Short beep for tap
-        writeWav("tap", { 800.0 }, 100)
-        // Low buzz for error
-        writeWav("error", { 150.0 }, 300)
-        // Ascending tone for win
-        writeWav("win", { t -> 400.0 + 800.0 * t }, 600)
-        // Descending tone for lose
-        writeWav("lose", { t -> 400.0 - 400.0 * t }, 600)
-    }
 }
