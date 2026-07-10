@@ -13,11 +13,13 @@ val SurfaceDarkColor = Color(0xFF1A1A2E)
 
 // Semantic Tokens
 val CoinGold = NeonYellow
-val AppTitleColor = NeonMagenta
+val AppTitleColor = NeonGreen
 val PlayButtonColor = NeonGreen
 val ShopButtonColor = NeonYellow
 val SettingsButtonColor = NeonCyan
 val HelpButtonColor = NeonMagenta
+val DailyChallengeButtonColor = NeonYellow
+val LeaderboardButtonColor = NeonCyan
 
 // Material 3 Dark Color Scheme (Strictly Dark)
 val primaryDark = NeonCyan

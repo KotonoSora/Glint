@@ -10,8 +10,28 @@ data class GameUiState(
     val matchesFound: Int = 0,
     val isProcessing: Boolean = false,
     val gameCompleted: Boolean = false,
+    val isGameOver: Boolean = false,
     val coins: Int = 0,
-    val gridSize: Int = 4 // e.g., 4 for a 4x4 grid
+    val gridSize: Int = 4,
+    val maxMoves: Int = 0,
+    val isDailyChallenge: Boolean = false,
+    val dailyChallengeRules: DailyChallengeRules = DailyChallengeRules(),
+    val historyEntries: List<HistoryEntry> = emptyList()
+) : Parcelable
+
+@Parcelize
+data class DailyChallengeRules(
+    val gridSize: Int = 4,
+    val maxMoves: Int = 50,
+    val timeLimit: String = "NONE",
+    val rewardMultiplier: Int = 2
+) : Parcelable
+
+@Parcelize
+data class HistoryEntry(
+    val dateTime: String,
+    val score: Int,
+    val reward: Int
 ) : Parcelable
 
 @Parcelize

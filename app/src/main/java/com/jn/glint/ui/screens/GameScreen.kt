@@ -9,11 +9,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -41,8 +39,8 @@ import androidx.compose.ui.unit.sp
 import com.jn.glint.model.GameUiState
 import com.jn.glint.model.Tile
 import com.jn.glint.model.TileStatus
+import com.jn.glint.ui.GlintTopBar
 import com.jn.glint.ui.SmallNeonButton
-import com.jn.glint.ui.theme.CoinGold
 import com.jn.glint.ui.theme.GlintTheme
 import com.jn.glint.ui.theme.NeonCyan
 import com.jn.glint.ui.theme.NeonGreen
@@ -54,13 +52,15 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
-    onGameFinished: () -> Unit
+    onGameFinished: () -> Unit,
+    onQuickBuyClicked: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     GameContent(
         uiState = uiState,
         onGameFinished = onGameFinished,
+        onQuickBuyClicked = onQuickBuyClicked,
         onTileClicked = { index -> viewModel.onTileClicked(index) },
         onUseHint = { viewModel.useHint() },
         onUndoMove = { viewModel.undoMove() }
@@ -71,23 +71,31 @@ fun GameScreen(
 fun GameContent(
     uiState: GameUiState,
     onGameFinished: () -> Unit,
+    onQuickBuyClicked: () -> Unit,
     onTileClicked: (Int) -> Unit,
     onUseHint: () -> Unit,
     onUndoMove: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
 
-    LaunchedEffect(uiState.gameCompleted) {
-        if (uiState.gameCompleted) {
+    LaunchedEffect(uiState.gameCompleted, uiState.isGameOver) {
+        if (uiState.gameCompleted || uiState.isGameOver) {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            delay(1000.milliseconds) // Allow user to see the final match animation
+            delay(1000.milliseconds) // Allow user to see the final match animation or error
             onGameFinished()
         }
     }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            GlintTopBar(
+                title = if (uiState.maxMoves > 0) "Moves: ${uiState.moves}/${uiState.maxMoves}" else "Moves: ${uiState.moves}",
+                coins = uiState.coins,
+                onShopClicked = onQuickBuyClicked
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -96,29 +104,6 @@ fun GameContent(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "MOVES: ${uiState.moves}",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "COINS: ${uiState.coins}",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = CoinGold
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             // Play Area: 4 columns, Square cards (1:1), Scrollable
             LazyVerticalGrid(
                 columns = GridCells.Fixed(4),
@@ -269,6 +254,7 @@ fun GameScreenEasyPreview() {
         GameContent(
             uiState = uiState,
             onGameFinished = {},
+            onQuickBuyClicked = {},
             onTileClicked = {},
             onUseHint = {},
             onUndoMove = {}
@@ -293,6 +279,7 @@ fun GameScreenMediumPreview() {
         GameContent(
             uiState = uiState,
             onGameFinished = {},
+            onQuickBuyClicked = {},
             onTileClicked = {},
             onUseHint = {},
             onUndoMove = {}
@@ -317,6 +304,7 @@ fun GameScreenHardPreview() {
         GameContent(
             uiState = uiState,
             onGameFinished = {},
+            onQuickBuyClicked = {},
             onTileClicked = {},
             onUseHint = {},
             onUndoMove = {}
