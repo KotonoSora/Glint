@@ -1,71 +1,42 @@
-# Glint Production ProGuard Rules
-# Optimized for Jetpack Compose, Kotlin Coroutines, Retrofit, Moshi, Room, and CameraX.
+# Project General
+-keepattributes *Annotation*, InnerClasses, EnclosingMethod, Signature, SourceFile, LineNumberTable
 
-# -----------------------------------------------------------------------------------
-# General Rules
-# -----------------------------------------------------------------------------------
-
-# Preserve line number information for debugging stack traces.
--keepattributes SourceFile,LineNumberTable
-
-# Preserve Annotations and Signatures for Reflection-based libraries
--keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
-
-# -----------------------------------------------------------------------------------
 # Jetpack Compose
-# -----------------------------------------------------------------------------------
--keepclassmembers class androidx.compose.ui.platform.ComposeView {
-   public *;
+-keepclassmembers class androidx.compose.ui.platform.AndroidComposeView {
+    void *;
 }
--keep class androidx.compose.material.icons.** { *; }
+-keep class androidx.compose.runtime.Recomposer { *; }
+-keep class androidx.compose.ui.platform.AndroidComposeView { *; }
+-dontwarn androidx.compose.ui.platform.AndroidComposeView
 
-# -----------------------------------------------------------------------------------
+# ViewModel
+-keep class * extends androidx.lifecycle.ViewModel
+-keep class * extends androidx.lifecycle.ViewModelProvider$Factory
+
 # Kotlin Coroutines
-# -----------------------------------------------------------------------------------
-# Keep internal dispatcher names for runtime resolution
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
 -keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
 -keepnames class kotlinx.coroutines.android.AndroidDispatcherFactory {}
 -dontwarn kotlinx.coroutines.**
 
-# -----------------------------------------------------------------------------------
-# Retrofit / OkHttp
-# -----------------------------------------------------------------------------------
--dontwarn retrofit2.**
--keep class retrofit2.** { *; }
--keepattributes Signature, InnerClasses, EnclosingMethod
--dontwarn okhttp3.**
--dontwarn okio.**
--dontwarn javax.annotation.**
+# Google Play Billing (Mandatory for Store flow)
+-dontwarn com.android.billingclient.api.**
+-keep class com.android.vending.billing.**
 
-# -----------------------------------------------------------------------------------
-# Moshi (JSON Serialization)
-# -----------------------------------------------------------------------------------
-# Retain generic type information and JsonClass constructors
--keep class com.squareup.moshi.* { *; }
--keep class kotlin.reflect.jvm.internal.** { *; }
+# Coil (Image Loading)
+-dontwarn coil.**
 
-# Keep generated adapters
--keep class *JsonAdapter { *; }
+# DataStore (Persistence)
+-keep class androidx.datastore.preferences.core.** { *; }
+-dontwarn androidx.datastore.**
 
-# -----------------------------------------------------------------------------------
-# CameraX
-# -----------------------------------------------------------------------------------
--keep class androidx.camera.core.** { *; }
--keep class androidx.camera.camera2.** { *; }
--keep class androidx.camera.lifecycle.** { *; }
--keep class androidx.camera.view.** { *; }
+# Game Domain Models (Prevent field obfuscation for data integrity)
+-keep class com.jn.glint.model.** { *; }
 
-# -----------------------------------------------------------------------------------
-# Google Play Services & Billing
-# -----------------------------------------------------------------------------------
--keep class com.google.android.gms.** { *; }
--dontwarn com.google.android.gms.**
--keep class com.android.billingclient.** { *; }
--dontwarn com.android.billingclient.**
+# Support for Previews in release if needed (rare but useful for debugging)
+-keep class * implements androidx.compose.ui.tooling.preview.Preview
 
-# -----------------------------------------------------------------------------------
-# Glint Data Models (Crucial for Obfuscation)
-# -----------------------------------------------------------------------------------
-# Prevent Moshi/Room from failing due to renamed fields
--keepclassmembers class com.jn.glint.model.** { *; }
+# Android System / Standard Library
+-dontwarn android.util.Half
+-dontwarn java.lang.invoke.*
+-dontwarn sun.misc.Unsafe
