@@ -86,8 +86,8 @@ class BillingManager(
             }
 
             override fun onBillingServiceDisconnected() {
-                // Connection lost. It's better to wait for the next interaction to reconnect
-                // or use an exponential backoff strategy if it's critical.
+                // The library handles auto-reconnection. 
+                // You can add logging here if you want to track disconnection events.
             }
         })
     }
